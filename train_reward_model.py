@@ -11,7 +11,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR
 from huggingface_hub import list_repo_refs
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from accelerate import Accelerator
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", default="reciprocate/gpt2-tiny", type=str)
@@ -126,7 +126,15 @@ if __name__ == "__main__":
         input_ids = sum([[x["rejected_input_ids"], x["selected_input_ids"]] for x in batch], [])
         return tokenizer.pad({"input_ids": input_ids}, padding=True, return_tensors="pt")
 
-    dataset = load_dataset(args.dataset).select(range(5000))
+    dataset = load_dataset(args.dataset)
+    train_subsett = dataset['train'].select(range(5000))
+    test_subsett = dataset['test'].select(range(5000))
+    
+    # Create a new DatasetDict with the selected subsets
+    dataset = DatasetDict({
+        'train': train_subsett,
+        'test': test_subsett
+    })
     if "chosen" in dataset["train"].column_names:
         dataset = dataset.rename_column("chosen", "selected")
     if "replies" in dataset["train"].column_names:
@@ -168,11 +176,11 @@ if __name__ == "__main__":
 
     eval_dataloaders = []
     for name in args.calibration_datasets:
-        calibration_dataset = load_dataset(name).select(range(5000))
+        calibration_dataset = load_dataset(name)
         if "test" in calibration_dataset:
-            calibration_dataset = calibration_dataset["test"]
+            calibration_dataset = calibration_dataset["test"].select(range(5000))
         else:
-            calibration_dataset = calibration_dataset["train"]
+            calibration_dataset = calibration_dataset[].select(range(5000))
 
         accelerator.print(name, calibration_dataset)
         tokenized = calibration_dataset.map(tokenize, input_columns=["prompt", "selected", "rejected"], fn_kwargs=dict(tokenizer=tokenizer), desc="Tokenizing")

@@ -126,7 +126,7 @@ if __name__ == "__main__":
         input_ids = sum([[x["rejected_input_ids"], x["selected_input_ids"]] for x in batch], [])
         return tokenizer.pad({"input_ids": input_ids}, padding=True, return_tensors="pt")
 
-    dataset = load_dataset(args.dataset)
+    dataset = load_dataset(args.dataset).select(range(5000))
     if "chosen" in dataset["train"].column_names:
         dataset = dataset.rename_column("chosen", "selected")
     if "replies" in dataset["train"].column_names:
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
     eval_dataloaders = []
     for name in args.calibration_datasets:
-        calibration_dataset = load_dataset(name)
+        calibration_dataset = load_dataset(name).select(range(5000))
         if "test" in calibration_dataset:
             calibration_dataset = calibration_dataset["test"]
         else:
@@ -288,7 +288,7 @@ if __name__ == "__main__":
                 model.train()
 
             with accelerator.accumulate(model):
-                scores = model(**batch, use_cache=not args.gradient_checkpointing)[0]
+                scores = model(**batch)[0]
                 loss = -F.logsigmoid(scores.reshape(-1, 2).diff()).mean()
                 accelerator.backward(loss)
                 opt.step()

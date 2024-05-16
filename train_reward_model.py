@@ -178,9 +178,9 @@ if __name__ == "__main__":
     for name in args.calibration_datasets:
         calibration_dataset = load_dataset(name)
         if "test" in calibration_dataset:
-            calibration_dataset = calibration_dataset["test"].select(range(5000))
+            calibration_dataset = calibration_dataset["test"]
         else:
-            calibration_dataset = calibration_dataset[].select(range(5000))
+            calibration_dataset = calibration_dataset[]
 
         accelerator.print(name, calibration_dataset)
         tokenized = calibration_dataset.map(tokenize, input_columns=["prompt", "selected", "rejected"], fn_kwargs=dict(tokenizer=tokenizer), desc="Tokenizing")

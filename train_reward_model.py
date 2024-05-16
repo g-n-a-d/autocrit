@@ -180,7 +180,7 @@ if __name__ == "__main__":
         if "test" in calibration_dataset:
             calibration_dataset = calibration_dataset["test"]
         else:
-            calibration_dataset = calibration_dataset[]
+            calibration_dataset = calibration_dataset["train"]
 
         accelerator.print(name, calibration_dataset)
         tokenized = calibration_dataset.map(tokenize, input_columns=["prompt", "selected", "rejected"], fn_kwargs=dict(tokenizer=tokenizer), desc="Tokenizing")
